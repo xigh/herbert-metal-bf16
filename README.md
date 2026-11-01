@@ -157,7 +157,7 @@ The online softmax, in f32: the row maximum reduced across the lanes that hold t
 
 A Mac Studio M3 Ultra, 96 GB, macOS 26.5, for every table below: the only machine of the three where every model fits and the measure stays stable. The engine was also run on a MacBook Air M1 (8 GB) and a MacBook Air M5 (32 GB). Built with the stable Rust toolchain (1.98), release profile `opt-level=3`.
 
-The comparators: mlx-lm 0.32.3 on the bf16 checkpoint (or the float16 one for the f16 references), llama.cpp `fb4b2737` (Metal) on the bf16 GGUF. One request at a time, pseudo-random ids, two runs per measure, the order of the engines reversed from one cell to the next. Scripts, logs and protocol: [herbert-metal-bench](https://github.com/xigh/herbert-metal-bench), tag `v1-2026-11-01`. The herbert numbers are this tree's (development commit `f07e234`), measured after the correctness check was added; mlx-lm's and llama.cpp's come from the first pass of the same night on the same machine, a few hours earlier. mlx-lm's and llama.cpp's rates are their own benchmarks' (wall-clock). herbert's decode rates are wall-clock too (`herbert-metal-bench`'s first table); its GPU rate (the GPU time of the command buffers, the second table) is 1 to 12 % higher there (Qwen3.5-0.8B tg128: 382 against 336) and is not used. herbert's prefill rates are its GPU rate, within 0.5 % of its wall-clock one (0.8B pp2048: 12 775 against 12 738).
+The comparators: mlx-lm 0.32.0 (on mlx 0.32.3) on the bf16 checkpoint (or the float16 one for the f16 references), llama.cpp `fb4b2737` (Metal) on the bf16 GGUF. One request at a time, pseudo-random ids, two runs per measure, the order of the engines reversed from one cell to the next. Scripts, logs and protocol: [herbert-metal-bench](https://github.com/xigh/herbert-metal-bench), tag `v1-2026-11-01`. The herbert numbers are this tree's (development commit `f07e234`), measured after the correctness check was added; mlx-lm's and llama.cpp's come from the first pass of the same night on the same machine, a few hours earlier. mlx-lm's and llama.cpp's rates are their own benchmarks' (wall-clock). herbert's decode rates are wall-clock too (`herbert-metal-bench`'s first table); its GPU rate (the GPU time of the command buffers, the second table) is 1 to 12 % higher there (Qwen3.5-0.8B tg128: 382 against 336) and is not used. herbert's prefill rates are its GPU rate, within 0.5 % of its wall-clock one (0.8B pp2048: 12 775 against 12 738).
 
 ### The same tokens
 
@@ -205,7 +205,7 @@ The two large models, at 512 and 8 192 tokens:
 | Qwen3.6-35B-A3B, mlx-lm | 1 893 | 2 487 |
 | Qwen3.6-35B-A3B, llama.cpp | 2 004 | 1 804 |
 
-mlx-lm 0.32.3 did not load Qwen3.8-27B in bf16 on this machine, twice (`GPU Timeout Error` in `mx.eval(model.parameters())`).
+mlx-lm did not load Qwen3.8-27B in bf16 on this machine during the night, twice (`GPU Timeout Error` in `mx.eval(model.parameters())`); it loaded the next morning, for the decode measure below.
 
 ### Decode (bf16, tokens/s)
 
@@ -214,8 +214,10 @@ mlx-lm 0.32.3 did not load Qwen3.8-27B in bf16 on this machine, twice (`GPU Time
 | | 0.8B | 2B | 4B | 9B | 27B | 35B-A3B |
 |---|---:|---:|---:|---:|---:|---:|
 | herbert | **336** | **170** | **82** | **46** | **14.7** | **87.0** |
-| mlx-lm | 250 | 144 | 71 | 41 | does not load | 73 to 78 |
+| mlx-lm | 250 | 144 | 71 | 41 | 13.4 | 74.0 |
 | llama.cpp | 210 | 135 | 69 | 41 | 13.5 | 71.7 |
+
+mlx-lm's 0.8B to 9B values are `mlx_lm benchmark -p 2048 -g 128`: its 128 tokens follow a 2 048-token prompt. Measured again from an (almost) empty context the next morning, framed by herbert and llama.cpp in the same session, they hold within 2 % (256 / 144 / 71 / 41); the 27B and 35B-A3B values come from that measure (herbert-metal-bench, `raw/2026-11-01-metal-art004-mlx-tg-vide`).
 
 128 tokens after 32 768 and after 81 920 tokens of context:
 
