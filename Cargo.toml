@@ -1,0 +1,68 @@
+[package]
+name = "herbert-metal-bf16"
+version = "0.1.0"
+edition = "2021"
+authors = ["Philippe Anel <philippe@dremml.com>"]
+license = "MIT"
+description = "Qwen3.5 in bf16 (or f16, feature `f16`) on Apple GPUs: every compute kernel emitted at start-up as Metal Shading Language"
+
+[lib]
+name = "herbert_metal"
+path = "src/lib.rs"
+
+[[bin]]
+name = "herbert-metal-chat"
+path = "src/bin/herbert-metal-chat.rs"
+
+[[bin]]
+name = "herbert-metal-ppl"
+path = "src/bin/herbert-metal-ppl.rs"
+
+[[bin]]
+name = "herbert-metal-serve"
+path = "src/bin/herbert-metal-serve.rs"
+
+[[bin]]
+name = "herbert-metal-q4cache"
+path = "src/bin/herbert-metal-q4cache.rs"
+
+[[bin]]
+name = "herbert-metal-bench"
+path = "src/bin/herbert-metal-bench.rs"
+
+[[bin]]
+name = "herbert-metal-probe"
+path = "src/bin/herbert-metal-probe.rs"
+
+[features]
+default = ["bf16"]
+# The activations and states the DeltaNet keeps between kernels (projection,
+# conv, recurrence output, the two states) in bf16 instead of f32, as
+# herbert-vk-bf16's default build.
+bf16 = []
+# f16 in place of bf16 for every 16-bit value the GPU keeps (weights converted
+# at load, activations, K/V cache, logits, RoPE tables; with `bf16`, the
+# DeltaNet's states too). Without it, the
+# bf16 engine, the witness.
+f16 = []
+
+[dependencies]
+objc2 = "0.6"
+objc2-foundation = "0.3"
+objc2-metal = "0.3.2"
+half = "2.3"
+libc = "0.2"
+memmap2 = "0.9"
+safetensors = "0.4.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "macros"] }
+tokio-stream = "0.1"
+minijinja = { version = "2", features = ["json", "builtins", "macros", "multi_template"] }
+minijinja-contrib = { version = "2", features = ["pycompat"] }
+tokenizers = { version = "0.22.2", default-features = false, features = ["fancy-regex"] }
+
+[profile.release]
+opt-level = 3
